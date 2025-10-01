@@ -81,7 +81,7 @@ const Landing = () => {
               ClimaTrack reveals the likelihood of very hot, cold, windy, humid, or uncomfortable conditions for any place and day of year — using decades of NASA Earth observations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/app">
+              <Link to="/register">
                 <Button variant="hero" size="lg" className="w-full sm:w-auto">
                   Open the App
                 </Button>

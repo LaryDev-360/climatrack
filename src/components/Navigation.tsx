@@ -11,12 +11,13 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <span className="text-lg font-bold text-white">C</span>
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="ClimaTrack Logo"
+              className="h-10 w-10 rounded-full border border-gray-300 shadow-sm object-cover"
+            />
             <span className="text-xl font-bold">ClimaTrack</span>
           </Link>
-
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             <a href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
@@ -28,7 +29,7 @@ const Navigation = () => {
             <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
               About
             </Link>
-            <Link to="/app">
+            <Link to="/login">
               <Button variant="outline" size="sm">
                 Open App
               </Button>
