@@ -98,7 +98,6 @@ const AppPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      
       <div className="pt-16">
         <div className="flex h-[calc(100vh-4rem)]">
           {/* Desktop Sidebar */}
