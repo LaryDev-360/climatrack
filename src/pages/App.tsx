@@ -1,201 +1,286 @@
-import Navigation from "@/components/Navigation";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Gauge, Download, MapPin, Calendar, Settings, Menu } from "lucide-react";
+import { Gauge, Download, MapPin, Menu, AlertTriangle, CalendarDays, Info, Droplets, Timer } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+import SidebarFilters from "@/components/SidebarFilters";
+import MapPicker, { LatLng } from "@/components/MapPicker";
+import { fetchRisk, RiskResponse } from "@/lib/api";
+
+const todayISO = () => new Date().toISOString().slice(0,10);
+
+const toCSV = (obj: Record<string, any>) => {
+  const keys = Object.keys(obj);
+  const values = keys.map((k) => JSON.stringify(obj[k] ?? ""));
+  return keys.join(",") + "\n" + values.join(",") + "\n";
+};
 
 const AppPage = () => {
   const isMobile = useIsMobile();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const SidebarContent = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-          <Settings className="h-6 w-6 text-primary" />
-          Select Parameters
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Configure your climate analysis
-        </p>
-      </div>
+  const [picked, setPicked] = useState<LatLng | undefined>(undefined);
+  const [locationText, setLocationText] = useState("");
+  const [dateISO, setDateISO] = useState(todayISO());
+  const [startHour, setStartHour] = useState(14);
+  const [endHour, setEndHour] = useState(18);
+  const [mm, setMm] = useState(1.0);
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="location" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Location
-          </Label>
-          <Input
-            id="location"
-            placeholder="Lagos, Nigeria"
-            defaultValue="Lagos, Nigeria"
-          />
-        </div>
+  const [computing, setComputing] = useState(false);
+  const [result, setResult] = useState<RiskResponse | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
-        <div className="space-y-2">
-          <Label htmlFor="doy" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Day of Year
-          </Label>
-          <Input
-            id="doy"
-            type="date"
-            defaultValue="2024-07-15"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Variables</Label>
-          <div className="space-y-2">
-            {["Temperature", "Precipitation", "Wind", "Humidity", "Dust"].map((variable) => (
-              <label key={variable} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  defaultChecked={variable === "Temperature" || variable === "Wind"}
-                  className="rounded border-border"
-                />
-                <span className="text-sm">{variable}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Threshold Mode</Label>
-          <Select defaultValue="standard">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="standard">Standard</SelectItem>
-              <SelectItem value="percentile">Percentile</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-3 pt-4">
-        <Button className="w-full" variant="hero">
-          Compute Probabilities
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            <Download className="h-4 w-4 mr-2" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            <Download className="h-4 w-4 mr-2" />
-            JSON
-          </Button>
-        </div>
-      </div>
-    </div>
+  const latlonLabel = picked ? `${picked.lat.toFixed(4)}°, ${picked.lon.toFixed(4)}°` : "No point selected";
+  const canCompute = useMemo(
+    () => !!picked && !!dateISO && startHour < endHour && mm > 0,
+    [picked, dateISO, startHour, endHour, mm]
   );
+
+  async function runCompute(dateISO_: string, startHour_: number, endHour_: number, mm_: number) {
+    if (!picked) { setErrorMsg("Select a point (search or map)."); return; }
+    if (!dateISO_ && !dateISO) { setErrorMsg("Choose a date."); return; }
+    if (startHour_ >= endHour_) { setErrorMsg("Start hour must be < end hour."); return; }
+    if (mm_ <= 0) { setErrorMsg("Threshold (mm) must be > 0."); return; }
+
+    setErrorMsg("");
+    setComputing(true);
+    try {
+      const data = await fetchRisk({
+        lat: picked.lat,
+        lon: picked.lon,
+        dateISO: dateISO_ || dateISO,
+        h1: startHour_,
+        h2: endHour_,
+        mm: mm_,
+      });
+      setResult(data);
+    } catch (e: any) {
+      setResult(null);
+      setErrorMsg(e?.message || "Request failed.");
+    } finally {
+      setComputing(false);
+    }
+  }
+
+  const riskColor = (level?: RiskResponse["risk_level"]) =>
+    level === "high" ? "text-red-600"
+    : level === "elevated" ? "text-orange-500"
+    : level === "moderate" ? "text-amber-500"
+    : "text-emerald-600";
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="pt-16">
-        <div className="flex h-[calc(100vh-4rem)]">
-          {/* Desktop Sidebar */}
-          {!isMobile && (
-            <aside className="w-80 border-r border-border/50 bg-card/30 backdrop-blur-sm p-6 overflow-y-auto">
-              <SidebarContent />
-            </aside>
-          )}
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            {isMobile && (
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9"><Menu className="h-5 w-5" /></Button>
+                </SheetTrigger>
+                {/* Très haut z-index pour rester au-dessus de Leaflet */}
+                <SheetContent side="left" className="w-80 overflow-y-auto z-[1000]">
+                  <SidebarFilters
+                    initialLocation={locationText}
+                    initialDate={dateISO}
+                    initialStartHour={startHour}
+                    initialEndHour={endHour}
+                    initialMm={mm}
+                    computing={computing}
+                    onLocationPick={(name) => setLocationText(name)}
+                    onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
+                    onCompute={async (p) => {
+                      setLocationText(p.locationText);
+                      setDateISO(p.dateISO);
+                      setStartHour(p.startHour);
+                      setEndHour(p.endHour);
+                      setMm(p.mm);
+                      if (!picked) return; // si l’utilisateur n’a pas encore choisi de point
+                      await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
+                      setMobileOpen(false);
+                    }}
+                  />
+                </SheetContent>
+              </Sheet>
+            )}
+            <div className="flex items-center gap-2">
+              <img src="/logo.jpg" alt="ClimaTrack" className="h-7 w-7 rounded-full object-cover border border-border/60" />
+              <span className="font-semibold">ClimaTrack</span>
+            </div>
+          </div>
+          <div className="hidden sm:block text-sm text-muted-foreground">Plan with probabilities, not hopes.</div>
+        </div>
+      </header>
 
-          {/* Mobile Sidebar Trigger */}
-          {isMobile && (
-            <Sheet>
-              <SheetTrigger asChild>
+      <div className="flex">
+        {/* Sidebar desktop */}
+        {!isMobile && (
+          <aside className="w-80 border-r border-border/50 bg-card/30 backdrop-blur-sm p-6 overflow-y-auto">
+            <SidebarFilters
+              initialLocation={locationText}
+              initialDate={dateISO}
+              initialStartHour={startHour}
+              initialEndHour={endHour}
+              initialMm={mm}
+              computing={computing}
+              onLocationPick={(name) => setLocationText(name)}
+              onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
+              onCompute={async (p) => {
+                setLocationText(p.locationText);
+                setDateISO(p.dateISO);
+                setStartHour(p.startHour);
+                setEndHour(p.endHour);
+                setMm(p.mm);
+                if (!picked) return;
+                await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
+              }}
+            />
+          </aside>
+        )}
+
+        {/* Main */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="mx-auto grid max-w-6xl gap-4 md:gap-6">
+            {/* Map */}
+            <Card className="p-6 gradient-card border-border/50 shadow-elevated">
+              <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+                <MapPin className="h-5 w-5 text-primary" />
+                Pick a location on the map
+              </h3>
+              <div className="relative z-0">
+                <MapPicker
+                  value={picked}
+                  onChange={setPicked}
+                  onReverseName={(placeName) => setLocationText(placeName)}
+                  height="20rem"
+                  zoom={8}
+                />
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">{latlonLabel}</div>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-elevated"
+                  onClick={() => runCompute(dateISO, startHour, endHour, mm)}
+                  disabled={!canCompute || computing}
                 >
-                  <Menu className="h-6 w-6" />
+                  {computing ? "Computing..." : "Compute with current selection"}
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-80 overflow-y-auto">
-                <SidebarContent />
-              </SheetContent>
-            </Sheet>
-          )}
+              </div>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
-              {/* Location Map */}
-              <Card className="p-6 gradient-card border-border/50 shadow-elevated">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Location
-                </h3>
-                <div className="h-64 rounded-lg bg-muted/20 flex items-center justify-center border border-border/50">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
-                    <p className="text-muted-foreground">Lagos, Nigeria</p>
-                    <p className="text-sm text-muted-foreground">6.37°N, 2.39°E</p>
+              {/* Messages d’aide */}
+              {!canCompute && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {(!picked) ? "Pick a location (search or map). " : ""}
+                  {(!dateISO) ? "Choose a date. " : ""}
+                  {(startHour >= endHour) ? "Start hour must be < end hour. " : ""}
+                  {(mm <= 0) ? "Threshold (mm) must be > 0." : ""}
+                </div>
+              )}
+              {errorMsg && (
+                <div className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                  {errorMsg}
+                </div>
+              )}
+            </Card>
+
+            {/* Risk card */}
+            <Card className="gradient-card border-border/50 p-4 shadow-elevated md:p-6">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold md:mb-6 md:text-xl">
+                <Gauge className="h-5 w-5 text-primary" />
+                Rain Risk
+              </h3>
+
+              {!result ? (
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-6 text-sm text-muted-foreground">
+                  No data yet. Pick a point, choose a date & hour range, set threshold, then compute.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-border/50 p-4">
+                    <div className={`mb-1 text-4xl font-bold ${riskColor(result.risk_level)}`}>
+                      {result.probability_percent.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Probability ≥ {result.threshold_mm}mm</div>
+                  </div>
+
+                  <div className="rounded-lg border border-border/50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm">
+                      <AlertTriangle className={`h-4 w-4 ${riskColor(result.risk_level)}`} />
+                      <span className="uppercase tracking-wide font-semibold">{result.risk_level}</span>
+                    </div>
+                    <p className="text-sm">{result.message}</p>
+                  </div>
+
+                  <div className="rounded-lg border border-border/50 p-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /><span>{result.date}</span></div>
+                    <div className="flex items-center gap-2"><Timer className="h-4 w-4" /><span>{result.window}</span></div>
+                    <div className="flex items-center gap-2"><Droplets className="h-4 w-4" /><span>{result.threshold_mm} mm</span></div>
+                    <div className="flex items-center gap-2"><Info className="h-4 w-4" /><span className="capitalize">{result.source} · {result.confidence} confidence</span></div>
                   </div>
                 </div>
-              </Card>
+              )}
+            </Card>
 
-              {/* Probabilities */}
-              <Card className="p-4 md:p-6 gradient-card border-border/50 shadow-elevated">
-                <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6 flex items-center gap-2">
-                  <Gauge className="h-5 w-5 text-primary" />
-                  Probabilities
-                </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
-                  {[
-                    { label: "Very Hot", value: 62, color: "text-red-500" },
-                    { label: "Very Cold", value: 4, color: "text-blue-500" },
-                    { label: "Very Windy", value: 18, color: "text-cyan-500" },
-                    { label: "Very Humid", value: 55, color: "text-green-500" },
-                    { label: "Very Uncomfortable", value: 31, color: "text-yellow-500" },
-                  ].map((item) => (
-                    <div key={item.label} className="text-center">
-                      <div className={`text-2xl md:text-4xl font-bold mb-1 md:mb-2 ${item.color}`}>
-                        {item.value}%
-                      </div>
-                      <div className="text-xs md:text-sm text-muted-foreground">{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* Distribution Chart */}
-              <Card className="p-6 gradient-card border-border/50 shadow-elevated">
-                <h3 className="text-xl font-semibold mb-4">Distribution (Bell Curve)</h3>
-                <div className="h-64 rounded-lg bg-muted/20 flex items-center justify-center border border-border/50">
-                  <p className="text-muted-foreground">Temperature distribution visualization</p>
-                </div>
-              </Card>
-
-              {/* Time Series Chart */}
-              <Card className="p-6 gradient-card border-border/50 shadow-elevated">
-                <h3 className="text-xl font-semibold mb-4">Time Series</h3>
-                <div className="h-64 rounded-lg bg-muted/20 flex items-center justify-center border border-border/50">
-                  <p className="text-muted-foreground">Historical time series data</p>
-                </div>
-              </Card>
-
-              {/* Summary */}
-              <Card className="p-4 md:p-6 gradient-card border-border/50 shadow-elevated">
-                <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Summary</h3>
-                <p className="text-sm md:text-lg">
-                  On <span className="font-semibold text-primary">July 15</span> at{" "}
-                  <span className="font-semibold text-primary">Lagos</span>, there is a{" "}
-                  <span className="font-bold text-xl md:text-2xl text-red-500">62%</span> chance of very hot
-                  conditions ({">"} 32°C).
-                </p>
-              </Card>
-            </div>
-          </main>
-        </div>
+            {/* Summary */}
+            <Card className="gradient-card border-border/50 p-4 shadow-elevated md:p-6">
+              <h3 className="mb-3 text-lg font-semibold md:mb-4 md:text-xl">Summary</h3>
+              <p className="text-sm md:text-lg">
+                {result ? (
+                  <>
+                    On <span className="font-semibold text-primary">{result.date}</span> at{" "}
+                    <span className="font-semibold text-primary">{latlonLabel}</span> between{" "}
+                    <span className="font-semibold text-primary">{result.window}</span>, risk level is{" "}
+                    <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.risk_level}</span> with{" "}
+                    <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.probability_percent.toFixed(1)}%</span>{" "}
+                    chance of rain ≥ {result.threshold_mm}mm ({result.source}, {result.confidence}).
+                  </>
+                ) : (
+                  <>No computed summary yet.</>
+                )}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!result}
+                  onClick={() => {
+                    if (!result) return;
+                    const blob = new Blob([toCSV(result as any)], { type: "text/csv;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!result}
+                  onClick={() => {
+                    if (!result) return;
+                    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  JSON
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </main>
       </div>
     </div>
   );
