@@ -10,7 +10,6 @@ import MapPicker, { LatLng } from "@/components/MapPicker";
 import { fetchRisk, RiskResponse } from "@/lib/api";
 
 const todayISO = () => new Date().toISOString().slice(0,10);
-
 const toCSV = (obj: Record<string, any>) => {
   const keys = Object.keys(obj);
   const values = keys.map((k) => JSON.stringify(obj[k] ?? ""));
@@ -21,6 +20,7 @@ const AppPage = () => {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ---- État centralisé (source de vérité) ----
   const [picked, setPicked] = useState<LatLng | undefined>(undefined);
   const [locationText, setLocationText] = useState("");
   const [dateISO, setDateISO] = useState(todayISO());
@@ -81,24 +81,26 @@ const AppPage = () => {
                 <SheetTrigger asChild>
                   <Button variant="outline" size="icon" className="h-9 w-9"><Menu className="h-5 w-5" /></Button>
                 </SheetTrigger>
-                {/* Très haut z-index pour rester au-dessus de Leaflet */}
                 <SheetContent side="left" className="w-80 overflow-y-auto z-[1000]">
                   <SidebarFilters
-                    initialLocation={locationText}
-                    initialDate={dateISO}
-                    initialStartHour={startHour}
-                    initialEndHour={endHour}
-                    initialMm={mm}
+                    locationText={locationText}
+                    dateISO={dateISO}
+                    startHour={startHour}
+                    endHour={endHour}
+                    mm={mm}
                     computing={computing}
                     onLocationPick={(name) => setLocationText(name)}
                     onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
+                    onChange={(p) => {
+                      if (p.locationText !== undefined) setLocationText(p.locationText);
+                      if (p.dateISO !== undefined) setDateISO(p.dateISO);
+                      if (p.startHour !== undefined) setStartHour(p.startHour);
+                      if (p.endHour !== undefined) setEndHour(p.endHour);
+                      if (p.mm !== undefined) setMm(p.mm);
+                    }}
                     onCompute={async (p) => {
-                      setLocationText(p.locationText);
-                      setDateISO(p.dateISO);
-                      setStartHour(p.startHour);
-                      setEndHour(p.endHour);
-                      setMm(p.mm);
-                      if (!picked) return; // si l’utilisateur n’a pas encore choisi de point
+                      // onCompute reflète déjà le state parent puisqu'il est contrôlé
+                      if (!picked) return;
                       await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
                       setMobileOpen(false);
                     }}
@@ -120,20 +122,22 @@ const AppPage = () => {
         {!isMobile && (
           <aside className="w-80 border-r border-border/50 bg-card/30 backdrop-blur-sm p-6 overflow-y-auto">
             <SidebarFilters
-              initialLocation={locationText}
-              initialDate={dateISO}
-              initialStartHour={startHour}
-              initialEndHour={endHour}
-              initialMm={mm}
+              locationText={locationText}
+              dateISO={dateISO}
+              startHour={startHour}
+              endHour={endHour}
+              mm={mm}
               computing={computing}
               onLocationPick={(name) => setLocationText(name)}
               onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
+              onChange={(p) => {
+                if (p.locationText !== undefined) setLocationText(p.locationText);
+                if (p.dateISO !== undefined) setDateISO(p.dateISO);
+                if (p.startHour !== undefined) setStartHour(p.startHour);
+                if (p.endHour !== undefined) setEndHour(p.endHour);
+                if (p.mm !== undefined) setMm(p.mm);
+              }}
               onCompute={async (p) => {
-                setLocationText(p.locationText);
-                setDateISO(p.dateISO);
-                setStartHour(p.startHour);
-                setEndHour(p.endHour);
-                setMm(p.mm);
                 if (!picked) return;
                 await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
               }}
@@ -169,7 +173,6 @@ const AppPage = () => {
                 </Button>
               </div>
 
-              {/* Messages d’aide */}
               {!canCompute && (
                 <div className="mt-2 text-xs text-muted-foreground">
                   {(!picked) ? "Pick a location (search or map). " : ""}

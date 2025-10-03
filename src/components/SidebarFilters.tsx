@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,35 +6,30 @@ import { Calendar, MapPin, Settings, Clock, Droplets } from "lucide-react";
 import SearchBox from "@/components/SearchBox";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const todayISO = () => new Date().toISOString().slice(0,10);
 
 export default function SidebarFilters({
-  initialLocation = "",
-  initialDate = todayISO(),
-  initialStartHour = 14,
-  initialEndHour = 18,
-  initialMm = 1.0,
+  locationText,
+  dateISO,
+  startHour,
+  endHour,
+  mm,
   computing,
   onLocationPick,
   onSelectLatLon,
+  onChange,    // <- un seul callback pour tout changement
   onCompute,
 }: {
-  initialLocation?: string;
-  initialDate?: string;
-  initialStartHour?: number;
-  initialEndHour?: number;
-  initialMm?: number;
+  locationText: string;
+  dateISO: string;
+  startHour: number;
+  endHour: number;
+  mm: number;
   computing?: boolean;
   onLocationPick?: (name: string) => void;
   onSelectLatLon?: (lat: number, lon: number) => void;
+  onChange: (p: { locationText?: string; dateISO?: string; startHour?: number; endHour?: number; mm?: number }) => void;
   onCompute: (p: { locationText: string; dateISO: string; startHour: number; endHour: number; mm: number }) => void;
 }) {
-  const [locationText, setLocationText] = useState(initialLocation);
-  const [dateISO, setDateISO] = useState(initialDate);
-  const [startHour, setStartHour] = useState(initialStartHour);
-  const [endHour, setEndHour] = useState(initialEndHour);
-  const [mm, setMm] = useState<number>(initialMm);
-
   const canRun = locationText.trim().length > 0 && dateISO.length > 0 && startHour < endHour && mm > 0 && !computing;
 
   return (
@@ -57,9 +51,9 @@ export default function SidebarFilters({
           <SearchBox
             value={locationText}
             onSelect={(it) => {
-              setLocationText(it.name);
+              onChange({ locationText: it.name });
               onLocationPick?.(it.name);
-              onSelectLatLon?.(it.lat, it.lon); // → définit picked côté parent
+              onSelectLatLon?.(it.lat, it.lon);
             }}
             placeholder="City, Country"
           />
@@ -70,7 +64,11 @@ export default function SidebarFilters({
             <Calendar className="h-4 w-4" />
             Day (date)
           </Label>
-          <Input type="date" value={dateISO} onChange={(e) => setDateISO(e.target.value)} />
+          <Input
+            type="date"
+            value={dateISO}
+            onChange={(e) => onChange({ dateISO: e.target.value })}
+          />
         </div>
 
         <div className="space-y-2">
@@ -79,13 +77,13 @@ export default function SidebarFilters({
             Hour interval
           </Label>
           <div className="flex gap-2">
-            <Select value={String(startHour)} onValueChange={(v) => setStartHour(parseInt(v))}>
+            <Select value={String(startHour)} onValueChange={(v) => onChange({ startHour: parseInt(v) })}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Start" /></SelectTrigger>
               <SelectContent>
                 {HOURS.map((h) => <SelectItem key={h} value={String(h)}>{h.toString().padStart(2, "0")}:00</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={String(endHour)} onValueChange={(v) => setEndHour(parseInt(v))}>
+            <Select value={String(endHour)} onValueChange={(v) => onChange({ endHour: parseInt(v) })}>
               <SelectTrigger className="w-full"><SelectValue placeholder="End" /></SelectTrigger>
               <SelectContent>
                 {HOURS.map((h) => <SelectItem key={h} value={String(h)}>{h.toString().padStart(2, "0")}:00</SelectItem>)}
@@ -105,7 +103,7 @@ export default function SidebarFilters({
             step="0.1"
             min="0.1"
             value={mm}
-            onChange={(e) => setMm(parseFloat(e.target.value) || 0)}
+            onChange={(e) => onChange({ mm: parseFloat(e.target.value) || 0 })}
             placeholder="e.g. 1.0"
           />
           <p className="text-xs text-muted-foreground">Rain threshold used by /risk (mm)</p>
