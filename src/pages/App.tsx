@@ -4,10 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Gauge, Download, MapPin, Menu, AlertTriangle, CalendarDays, Info, Droplets, Timer } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import { getSkySummary } from "@/lib/rain_to_sky";
+import { Sun, CloudSun, Cloud, CloudDrizzle, CloudRain, CloudLightning } from "lucide-react";
 import SidebarFilters from "@/components/SidebarFilters";
 import MapPicker, { LatLng } from "@/components/MapPicker";
 import { fetchRisk, RiskResponse } from "@/lib/api";
+import AlternativeSuggestion from "@/components/AlternativeSuggestion";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+const SkyIcon = ({
+  name,
+  className,
+}: {
+  name: ReturnType<typeof getSkySummary>["icon"];
+  className?: string;
+}) => {
+  const icons = { Sun, CloudSun, Cloud, CloudDrizzle, CloudRain, CloudLightning };
+  const Icon = icons[name];
+  return <Icon className={className} />;
+};
+
 
 const todayISO = () => new Date().toISOString().slice(0,10);
 const toCSV = (obj: Record<string, any>) => {
@@ -113,7 +129,10 @@ const AppPage = () => {
               <span className="font-semibold">ClimaTrack</span>
             </div>
           </div>
-          <div className="hidden sm:block text-sm text-muted-foreground">Plan with probabilities, not hopes.</div>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block text-sm text-muted-foreground mr-2">Plan with probabilities, not hopes.</div>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -225,6 +244,24 @@ const AppPage = () => {
                 </div>
               )}
             </Card>
+
+            {/* Alternative Suggestion - Afficher si probabilité > 60% */}
+            {result && result.probability_percent > 60 && picked && (
+              <AlternativeSuggestion
+                lat={picked.lat}
+                lon={picked.lon}
+                date={dateISO}
+                h1={startHour}
+                h2={endHour}
+                currentRisk={result.probability_percent}
+                onSelectLocation={(lat, lon, name) => {
+                  setPicked({ lat, lon });
+                  setLocationText(name);
+                  // Scroll to map
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
 
             {/* Summary */}
             <Card className="gradient-card border-border/50 p-4 shadow-elevated md:p-6">
