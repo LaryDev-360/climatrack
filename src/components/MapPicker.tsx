@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -100,6 +100,17 @@ export default function MapPicker({
   zoom = 7,
 }: MapPickerProps) {
   const [point, setPoint] = useState<LatLng | undefined>(value);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to results when a point is selected
+  useEffect(() => {
+    if (point && resultsRef.current) {
+      resultsRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [point]);
 
   // Si "value" change (ex. via SearchBox), on met à jour le marker interne
   useEffect(() => {
@@ -154,7 +165,7 @@ export default function MapPicker({
         </MapContainer>
       </div>
 
-      <div className="absolute bottom-2 left-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
+      <div ref={resultsRef} className="absolute bottom-2 left-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
         <div className="text-xs text-muted-foreground text-center">
           <span className="block sm:hidden">Tap the map to pick a point</span>
           <span className="hidden sm:block">Click the map to pick a point</span>

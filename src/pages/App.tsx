@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -48,6 +48,18 @@ const AppPage = () => {
   const [computing, setComputing] = useState(false);
   const [result, setResult] = useState<RiskResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
+
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to results when computation completes
+  useEffect(() => {
+    if (result && resultsRef.current) {
+      resultsRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [result]);
 
   const latlonLabel = picked ? `${picked.lat.toFixed(4)}°, ${picked.lon.toFixed(4)}°` : "No point selected";
   const canCompute = useMemo(
@@ -284,7 +296,7 @@ const AppPage = () => {
 
             {/* Risk Assessment Section - Enhanced */}
             {result && (
-              <div className="space-y-6">
+              <div ref={resultsRef} className="space-y-6">
                 <div className="flex items-center gap-2">
                   <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
                   <span className="text-sm font-medium text-muted-foreground bg-background px-3">
