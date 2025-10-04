@@ -6,9 +6,25 @@ import { Gauge, Download, MapPin, Menu, AlertTriangle, AlertCircle, CalendarDays
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+import { getSkySummary } from "@/lib/rain_to_sky";
+import { Sun, CloudSun, Cloud, CloudDrizzle, CloudRain, CloudLightning } from "lucide-react";
 import SidebarFilters from "@/components/SidebarFilters";
 import MapPicker, { LatLng } from "@/components/MapPicker";
 import { fetchRisk, RiskResponse } from "@/lib/api";
+import AlternativeSuggestion from "@/components/AlternativeSuggestion";
+
+const SkyIcon = ({
+  name,
+  className,
+}: {
+  name: ReturnType<typeof getSkySummary>["icon"];
+  className?: string;
+}) => {
+  const icons = { Sun, CloudSun, Cloud, CloudDrizzle, CloudRain, CloudLightning };
+  const Icon = icons[name];
+  return <Icon className={className} />;
+};
+
 
 const todayISO = () => new Date().toISOString().slice(0,10);
 const toCSV = (obj: Record<string, any>) => {
@@ -183,14 +199,16 @@ const AppPage = () => {
                 </div>
 
                 <div className="relative">
-                  <MapPicker
-                    value={picked}
-                    onChange={setPicked}
-                    onReverseName={(placeName) => setLocationText(placeName)}
-                    height="24rem"
-                    zoom={8}
-                  />
-                  <div className="absolute top-4 right-4 z-10">
+                  <div className="aspect-[4/3] sm:aspect-[16/10] w-full">
+                    <MapPicker
+                      value={picked}
+                      onChange={setPicked}
+                      onReverseName={(placeName) => setLocationText(placeName)}
+                      height="100%"
+                      zoom={8}
+                    />
+                  </div>
+                  <div className="absolute top-4 right-4 z-30">
                     <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
                       <div className="text-sm font-medium text-foreground">
                         {latlonLabel}
@@ -349,67 +367,97 @@ const AppPage = () => {
                   </div>
                 </Card>
 
-                {/* Summary Section - Enhanced */}
-                <Card className="gradient-card border-border/50 shadow-elevated">
-                  <div className="p-6 border-b border-border/50">
-                    <h3 className="text-xl font-semibold">Event Summary</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="prose prose-sm max-w-none">
-                      <p className="text-base leading-relaxed">
-                        On <span className="font-semibold text-primary">{result.date}</span> at{" "}
-                        <span className="font-semibold text-primary">{latlonLabel}</span> between{" "}
-                        <span className="font-semibold text-primary">{result.window}</span>, the risk level is{" "}
-                        <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.risk_level}</span> with a{" "}
-                        <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.probability_percent.toFixed(1)}%</span>{" "}
-                        chance of precipitation exceeding {result.threshold_mm}mm.
-                        <span className="text-muted-foreground"> (Source: {result.source}, {result.confidence} confidence)</span>
-                      </p>
+                {/* Alternative Suggestion - Show if probability > 50% */}
+                {result.probability_percent > 50 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <span className="text-sm font-medium text-muted-foreground bg-background px-3">
+                        Alternative Locations
+                      </span>
+                      <div className="h-1 flex-1 bg-gradient-to-r from-border via-border to-transparent" />
                     </div>
 
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!result}
-                        onClick={() => {
-                          if (!result) return;
-                          const blob = new Blob([toCSV(result as any)], { type: "text/csv;charset=utf-8" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.csv`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Export CSV
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!result}
-                        onClick={() => {
-                          if (!result) return;
-                          const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.json`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Export JSON
-                      </Button>
-                    </div>
+                    <AlternativeSuggestion
+                      lat={picked.lat}
+                      lon={picked.lon}
+                      date={dateISO}
+                      h1={startHour}
+                      h2={endHour}
+                      currentRisk={result.probability_percent}
+                      onSelectLocation={(lat, lon, name) => {
+                        setPicked({ lat, lon });
+                        setLocationText(name);
+                        // Scroll to map
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    />
                   </div>
-                </Card>
+                )}
               </div>
+            )}
+
+            {/* Summary */}
+            {result && (
+              <Card className="gradient-card border-border/50 shadow-elevated">
+                <div className="p-6 border-b border-border/50">
+                  <h3 className="text-xl font-semibold">Event Summary</h3>
+                </div>
+                <div className="p-6">
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-base leading-relaxed">
+                      On <span className="font-semibold text-primary">{result.date}</span> at{" "}
+                      <span className="font-semibold text-primary">{latlonLabel}</span> between{" "}
+                      <span className="font-semibold text-primary">{result.window}</span>, the risk level is{" "}
+                      <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.risk_level}</span> with a{" "}
+                      <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.probability_percent.toFixed(1)}%</span>{" "}
+                      chance of precipitation exceeding {result.threshold_mm}mm.
+                      <span className="text-muted-foreground"> (Source: {result.source}, {result.confidence} confidence)</span>
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!result}
+                      onClick={() => {
+                        if (!result) return;
+                        const blob = new Blob([toCSV(result as any)], { type: "text/csv;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!result}
+                      onClick={() => {
+                        if (!result) return;
+                        const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export JSON
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             )}
           </div>
         </main>

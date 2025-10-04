@@ -16,7 +16,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="climatrack-theme">
+    <ThemeProvider defaultTheme="system" storageKey="climatrack-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />

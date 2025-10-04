@@ -23,6 +23,41 @@ const icon = new Icon({
   shadowSize: [41, 41],
 });
 
+// CSS resets for Leaflet to work properly with Tailwind CSS
+const leafletStyles = `
+  .leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+    z-index: 1 !important;
+    position: relative !important;
+  }
+  .leaflet-control-container {
+    display: none !important;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 0.5rem !important;
+  }
+  /* Mobile-specific fixes */
+  .leaflet-touch .leaflet-control-layers,
+  .leaflet-touch .leaflet-bar {
+    display: none !important;
+  }
+  .leaflet-touch .leaflet-control-attribution,
+  .leaflet-touch .leaflet-control-scale-line {
+    display: none !important;
+  }
+  /* Ensure proper touch handling on mobile */
+  .leaflet-container .leaflet-overlay-pane svg {
+    pointer-events: none !important;
+  }
+  .leaflet-container.leaflet-touch {
+    -webkit-tap-highlight-color: transparent !important;
+  }
+  .leaflet-container.leaflet-touch .leaflet-interactive {
+    cursor: pointer !important;
+  }
+`;
+
 function ClickCatcher({ onPick }: { onPick: (lat: number, lon: number) => void }) {
   useMapEvents({
     click(e) {
@@ -36,7 +71,10 @@ function RecenterOnPoint({ point, zoom }: { point?: LatLng; zoom: number }) {
   const map = useMap();
   useEffect(() => {
     if (point) {
-      map.setView([point.lat, point.lon], zoom, { animate: true });
+      map.setView([point.lat, point.lon], zoom, {
+        animate: true,
+        duration: 1.5 // Smoother animation
+      });
     }
   }, [point, zoom, map]);
   return null;
@@ -83,15 +121,28 @@ export default function MapPicker({
     if (name && onReverseName) onReverseName(name);
   };
 
+  // Inject Leaflet CSS fixes
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = leafletStyles;
+    document.head.appendChild(styleElement);
+
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
   return (
-    <div className="relative w-full overflow-hidden rounded-lg border border-border/50">
-      {/* z-index bas pour ne pas masquer la Sheet mobile */}
-      <div className="relative z-0">
+    <div className="relative w-full h-full overflow-hidden rounded-lg border border-border/50">
+      {/* Higher z-index for mobile to ensure map is visible */}
+      <div className="relative z-10 w-full h-full min-h-[300px]">
         <MapContainer
           center={defaultCenter}
           zoom={zoom}
-          style={{ height }}
-          className="bg-muted/20"
+          style={{ height: '100%', width: '100%', minHeight: '300px' }}
+          className="bg-muted/20 rounded-lg"
+          zoomControl={false}
+          attributionControl={false}
         >
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
@@ -103,9 +154,16 @@ export default function MapPicker({
         </MapContainer>
       </div>
 
-      <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
-        <span>Tap the map to pick a point</span>
-        {point && <span>{point.lat.toFixed(4)}°, {point.lon.toFixed(4)}°</span>}
+      <div className="absolute bottom-2 left-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
+        <div className="text-xs text-muted-foreground text-center">
+          <span className="block sm:hidden">Tap the map to pick a point</span>
+          <span className="hidden sm:block">Click the map to pick a point</span>
+          {point && (
+            <span className="block font-mono text-xs mt-1">
+              {point.lat.toFixed(4)}°, {point.lon.toFixed(4)}°
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
