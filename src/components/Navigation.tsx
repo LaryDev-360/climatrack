@@ -29,7 +29,7 @@ const Navigation = () => {
             <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
               About
             </Link>
-            <Link to="/login">
+            <Link to="/app">
               <Button variant="outline" size="sm">
                 Open App
               </Button>
