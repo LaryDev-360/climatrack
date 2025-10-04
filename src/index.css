@@ -54,6 +54,96 @@ All colors MUST be HSL.
     --sidebar-border: 217 33% 16%;
     --sidebar-ring: 214 95% 53%;
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 214 95% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 214 95% 53%;
+
+    /* Custom design tokens for light mode */
+    --gradient-hero: linear-gradient(135deg, hsl(214 95% 53% / 0.08), hsl(160 84% 39% / 0.08));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --shadow-glow: 0 0 40px hsl(214 95% 53% / 0.08);
+    --shadow-elevated: 0 10px 40px -10px hsl(0 0% 0% / 0.1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 214 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 214 95% 53%;
+  }
+
+  .dark {
+    --background: 217 33% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 217 33% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 214 95% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 160 84% 39%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 160 84% 39%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 18%;
+    --input: 217 33% 15%;
+    --ring: 214 95% 53%;
+
+    /* Custom design tokens for dark mode */
+    --gradient-hero: linear-gradient(135deg, hsl(214 95% 53% / 0.15), hsl(160 84% 39% / 0.15));
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 12%), hsl(217 33% 10%));
+    --shadow-glow: 0 0 40px hsl(214 95% 53% / 0.15);
+    --shadow-elevated: 0 10px 40px -10px hsl(217 33% 4% / 0.5);
+
+    --sidebar-background: 217 33% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 214 95% 53%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 16%;
+    --sidebar-ring: 214 95% 53%;
+  }
 }
 
 @layer base {

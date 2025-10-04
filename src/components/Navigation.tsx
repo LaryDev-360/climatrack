@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,11 +30,14 @@ const Navigation = () => {
             <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
               About
             </Link>
-            <Link to="/app">
-              <Button variant="outline" size="sm">
-                Open App
-              </Button>
-            </Link>
+            <div className="flex items-center space-x-3">
+              <ThemeToggle />
+              <Link to="/app">
+                <Button variant="outline" size="sm">
+                  Open App
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -69,11 +73,14 @@ const Navigation = () => {
             >
               About
             </Link>
-            <Link to="/app" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full">
-                Open App
-              </Button>
-            </Link>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <Link to="/app" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full">
+                  Open App
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </div>

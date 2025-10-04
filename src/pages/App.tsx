@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Gauge, Download, MapPin, Menu, AlertTriangle, CalendarDays, Info, Droplets, Timer } from "lucide-react";
+import { Gauge, Download, MapPin, Menu, AlertTriangle, AlertCircle, CalendarDays, Info, Droplets, Timer } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import SidebarFilters from "@/components/SidebarFilters";
 import MapPicker, { LatLng } from "@/components/MapPicker";
@@ -70,6 +71,21 @@ const AppPage = () => {
     : level === "moderate" ? "text-amber-500"
     : "text-emerald-600";
 
+  const getRiskLevelStyles = (level: RiskResponse["risk_level"]) => {
+    switch (level) {
+      case "high":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+      case "elevated":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
+      case "moderate":
+        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+      case "low":
+        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -113,7 +129,10 @@ const AppPage = () => {
               <span className="font-semibold">ClimaTrack</span>
             </div>
           </div>
-          <div className="hidden sm:block text-sm text-muted-foreground">Plan with probabilities, not hopes.</div>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block text-sm text-muted-foreground">Plan with probabilities, not hopes.</div>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -147,141 +166,251 @@ const AppPage = () => {
 
         {/* Main */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto grid max-w-6xl gap-4 md:gap-6">
-            {/* Map */}
-            <Card className="p-6 gradient-card border-border/50 shadow-elevated">
-              <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-                <MapPin className="h-5 w-5 text-primary" />
-                Pick a location on the map
-              </h3>
-              <div className="relative z-0">
-                <MapPicker
-                  value={picked}
-                  onChange={setPicked}
-                  onReverseName={(placeName) => setLocationText(placeName)}
-                  height="20rem"
-                  zoom={8}
-                />
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">{latlonLabel}</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  onClick={() => runCompute(dateISO, startHour, endHour, mm)}
-                  disabled={!canCompute || computing}
-                >
-                  {computing ? "Computing..." : "Compute with current selection"}
-                </Button>
-              </div>
-
-              {!canCompute && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {(!picked) ? "Pick a location (search or map). " : ""}
-                  {(!dateISO) ? "Choose a date. " : ""}
-                  {(startHour >= endHour) ? "Start hour must be < end hour. " : ""}
-                  {(mm <= 0) ? "Threshold (mm) must be > 0." : ""}
-                </div>
-              )}
-              {errorMsg && (
-                <div className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-                  {errorMsg}
-                </div>
-              )}
-            </Card>
-
-            {/* Risk card */}
-            <Card className="gradient-card border-border/50 p-4 shadow-elevated md:p-6">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold md:mb-6 md:text-xl">
-                <Gauge className="h-5 w-5 text-primary" />
-                Rain Risk
-              </h3>
-
-              {!result ? (
-                <div className="rounded-lg border border-border/50 bg-muted/20 p-6 text-sm text-muted-foreground">
-                  No data yet. Pick a point, choose a date & hour range, set threshold, then compute.
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-border/50 p-4">
-                    <div className={`mb-1 text-4xl font-bold ${riskColor(result.risk_level)}`}>
-                      {result.probability_percent.toFixed(1)}%
+          <div className="mx-auto max-w-6xl space-y-6">
+            {/* Map Section - Enhanced */}
+            <div className="space-y-4">
+              <Card className="gradient-card border-border/50 shadow-elevated overflow-hidden">
+                <div className="p-6 border-b border-border/50">
+                  <h3 className="flex items-center gap-3 text-xl font-semibold">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <MapPin className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="text-xs text-muted-foreground">Probability ≥ {result.threshold_mm}mm</div>
-                  </div>
+                    Select Your Event Location
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Click on the map or search for a city to set your event location
+                  </p>
+                </div>
 
-                  <div className="rounded-lg border border-border/50 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm">
-                      <AlertTriangle className={`h-4 w-4 ${riskColor(result.risk_level)}`} />
-                      <span className="uppercase tracking-wide font-semibold">{result.risk_level}</span>
+                <div className="relative">
+                  <MapPicker
+                    value={picked}
+                    onChange={setPicked}
+                    onReverseName={(placeName) => setLocationText(placeName)}
+                    height="24rem"
+                    zoom={8}
+                  />
+                  <div className="absolute top-4 right-4 z-10">
+                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
+                      <div className="text-sm font-medium text-foreground">
+                        {latlonLabel}
+                      </div>
                     </div>
-                    <p className="text-sm">{result.message}</p>
-                  </div>
-
-                  <div className="rounded-lg border border-border/50 p-4 space-y-2 text-sm">
-                    <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /><span>{result.date}</span></div>
-                    <div className="flex items-center gap-2"><Timer className="h-4 w-4" /><span>{result.window}</span></div>
-                    <div className="flex items-center gap-2"><Droplets className="h-4 w-4" /><span>{result.threshold_mm} mm</span></div>
-                    <div className="flex items-center gap-2"><Info className="h-4 w-4" /><span className="capitalize">{result.source} · {result.confidence} confidence</span></div>
                   </div>
                 </div>
-              )}
-            </Card>
 
-            {/* Summary */}
-            <Card className="gradient-card border-border/50 p-4 shadow-elevated md:p-6">
-              <h3 className="mb-3 text-lg font-semibold md:mb-4 md:text-xl">Summary</h3>
-              <p className="text-sm md:text-lg">
-                {result ? (
-                  <>
-                    On <span className="font-semibold text-primary">{result.date}</span> at{" "}
-                    <span className="font-semibold text-primary">{latlonLabel}</span> between{" "}
-                    <span className="font-semibold text-primary">{result.window}</span>, risk level is{" "}
-                    <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.risk_level}</span> with{" "}
-                    <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.probability_percent.toFixed(1)}%</span>{" "}
-                    chance of rain ≥ {result.threshold_mm}mm ({result.source}, {result.confidence}).
-                  </>
-                ) : (
-                  <>No computed summary yet.</>
-                )}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!result}
-                  onClick={() => {
-                    if (!result) return;
-                    const blob = new Blob([toCSV(result as any)], { type: "text/csv;charset=utf-8" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.csv`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  CSV
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!result}
-                  onClick={() => {
-                    if (!result) return;
-                    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  JSON
-                </Button>
+                <div className="p-6 border-t border-border/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => runCompute(dateISO, startHour, endHour, mm)}
+                        disabled={!canCompute || computing}
+                        size="lg"
+                        className="font-medium"
+                      >
+                        {computing ? (
+                          <>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Computing Risk...
+                          </>
+                        ) : (
+                          <>
+                            <Gauge className="mr-2 h-4 w-4" />
+                            Analyze Risk for This Location
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {!canCompute && (
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {(!picked || !locationText) && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <AlertCircle className="h-3 w-3" />
+                            Select location
+                          </span>
+                        )}
+                        {!dateISO && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <CalendarDays className="h-3 w-3" />
+                            Choose date
+                          </span>
+                        )}
+                        {startHour >= endHour && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <Timer className="h-3 w-3" />
+                            Fix time window
+                          </span>
+                        )}
+                        {mm <= 0 && (
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <Droplets className="h-3 w-3" />
+                            Set threshold
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {errorMsg && (
+                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-4">
+                      <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                        <AlertTriangle className="h-4 w-4" />
+                        {errorMsg}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+
+            {/* Risk Assessment Section - Enhanced */}
+            {result && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                  <span className="text-sm font-medium text-muted-foreground bg-background px-3">
+                    Risk Assessment Results
+                  </span>
+                  <div className="h-1 flex-1 bg-gradient-to-r from-border via-border to-transparent" />
+                </div>
+
+                <Card className="gradient-card border-border/50 shadow-elevated overflow-hidden">
+                  <div className="p-6 border-b border-border/50">
+                    <h3 className="flex items-center gap-3 text-xl font-semibold">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Gauge className="h-5 w-5 text-primary" />
+                      </div>
+                      Weather Risk Analysis
+                    </h3>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="grid gap-6 lg:grid-cols-3">
+                      {/* Main Probability Display */}
+                      <div className="lg:col-span-1">
+                        <div className="text-center p-6 rounded-xl bg-gradient-to-br from-background to-muted/30 border border-border/50">
+                          <div className={`text-5xl font-bold mb-2 ${riskColor(result.risk_level)}`}>
+                            {result.probability_percent.toFixed(1)}%
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-4">
+                            Probability of ≥ {result.threshold_mm}mm rain
+                          </div>
+                          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${getRiskLevelStyles(result.risk_level)}`}>
+                            <AlertTriangle className="h-4 w-4" />
+                            {result.risk_level.toUpperCase()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Risk Message & Details */}
+                      <div className="lg:col-span-2 space-y-4">
+                        <div className="p-4 rounded-lg bg-muted/20 border border-border/50">
+                          <p className="text-base leading-relaxed">{result.message}</p>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50">
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                            <div>
+                              <div className="text-sm font-medium">Date</div>
+                              <div className="text-sm text-muted-foreground">{result.date}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50">
+                            <Timer className="h-4 w-4 text-primary" />
+                            <div>
+                              <div className="text-sm font-medium">Time Window</div>
+                              <div className="text-sm text-muted-foreground">{result.window}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50">
+                            <Droplets className="h-4 w-4 text-primary" />
+                            <div>
+                              <div className="text-sm font-medium">Threshold</div>
+                              <div className="text-sm text-muted-foreground">{result.threshold_mm} mm</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50">
+                            <Info className="h-4 w-4 text-primary" />
+                            <div>
+                              <div className="text-sm font-medium">Data Source</div>
+                              <div className="text-sm text-muted-foreground capitalize">
+                                {result.source} • {result.confidence} confidence
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Summary Section - Enhanced */}
+                <Card className="gradient-card border-border/50 shadow-elevated">
+                  <div className="p-6 border-b border-border/50">
+                    <h3 className="text-xl font-semibold">Event Summary</h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="prose prose-sm max-w-none">
+                      <p className="text-base leading-relaxed">
+                        On <span className="font-semibold text-primary">{result.date}</span> at{" "}
+                        <span className="font-semibold text-primary">{latlonLabel}</span> between{" "}
+                        <span className="font-semibold text-primary">{result.window}</span>, the risk level is{" "}
+                        <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.risk_level}</span> with a{" "}
+                        <span className={`font-bold ${riskColor(result.risk_level)}`}>{result.probability_percent.toFixed(1)}%</span>{" "}
+                        chance of precipitation exceeding {result.threshold_mm}mm.
+                        <span className="text-muted-foreground"> (Source: {result.source}, {result.confidence} confidence)</span>
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!result}
+                        onClick={() => {
+                          if (!result) return;
+                          const blob = new Blob([toCSV(result as any)], { type: "text/csv;charset=utf-8" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.csv`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!result}
+                        onClick={() => {
+                          if (!result) return;
+                          const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `risk_${result.date}_${result.location.lat.toFixed(3)}_${result.location.lon.toFixed(3)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export JSON
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </Card>
+            )}
           </div>
         </main>
       </div>
