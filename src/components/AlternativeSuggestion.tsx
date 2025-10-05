@@ -81,7 +81,7 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
     setLastSearchedActivity(activityToUse); // Store the activity used for search
 
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
       const response = await fetch(
         `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`
       );
