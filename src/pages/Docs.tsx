@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-import { Database, Info, AlertTriangle, FileText, Settings } from "lucide-react";
+import { Database, Info, AlertTriangle, FileText, Settings, MapPin } from "lucide-react";
 
 const Docs = () => {
   return (
@@ -25,8 +25,9 @@ const Docs = () => {
               </h2>
               <div className="prose prose-invert max-w-none space-y-4">
                 <p className="text-muted-foreground">
-                  ClimaTrack provides historical probabilities, not forecasts. We analyze decades of NASA Earth
-                  observations to help you understand the likelihood of various weather conditions on any given day.
+                  ClimaTrack provides weather probability insights using both real-time forecasts and historical climatology.
+                  For events within 16 days, we use current weather forecast models. For longer-range planning,
+                  we analyze decades of NASA Earth observations to understand historical weather patterns.
                 </p>
               </div>
             </Card>
@@ -37,6 +38,10 @@ const Docs = () => {
                 Data Sources
               </h3>
               <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span><strong>Open-Meteo API:</strong> Real-time weather forecasts (GFS/ECMWF models) for up to 16 days ahead</span>
+                </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary mt-1">•</span>
                   <span><strong>NASA POWER:</strong> Solar radiation and meteorological parameters</span>
@@ -63,16 +68,16 @@ const Docs = () => {
               </h3>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Our methodology involves extracting data from multiple years around your selected day of year,
-                  computing statistical quantiles, and evaluating the probability of exceeding specific thresholds.
+                  Our methodology intelligently combines real-time forecasts with historical climatology based on your event date.
+                  The system automatically selects the most appropriate data source for accurate probability calculations.
                 </p>
                 <div className="bg-muted/20 p-4 rounded-lg border border-border/50">
-                  <h4 className="font-semibold text-foreground mb-2">Process Overview:</h4>
+                  <h4 className="font-semibold text-foreground mb-2">Intelligent Data Selection:</h4>
                   <ol className="list-decimal list-inside space-y-2">
-                    <li>Extract historical data for the selected location and day window</li>
-                    <li>Calculate statistical distributions across multiple years</li>
-                    <li>Compute probability of threshold exceedance</li>
-                    <li>Present results with confidence intervals</li>
+                    <li>For events within 16 days: Use real-time forecast models (GFS/ECMWF)</li>
+                    <li>For events beyond 16 days: Use historical climatology patterns</li>
+                    <li>Calculate probability of threshold exceedance for your time window</li>
+                    <li>Provide confidence levels and plain-language risk assessment</li>
                   </ol>
                 </div>
               </div>
@@ -106,6 +111,31 @@ const Docs = () => {
               </div>
             </Card>
 
+            <Card className="p-8 gradient-card border-border/50 shadow-elevated">
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
+                <MapPin className="h-6 w-6 text-primary" />
+                Alternative Locations
+              </h3>
+              <div className="space-y-4 text-muted-foreground">
+                <p>
+                  When your selected location shows high weather risk, ClimaTrack can help you find better alternatives
+                  within a 30km radius. This feature is especially useful for outdoor event planning.
+                </p>
+                <div className="bg-muted/20 p-4 rounded-lg border border-border/50">
+                  <h4 className="font-semibold text-foreground mb-2">How It Works:</h4>
+                  <ol className="list-decimal list-inside space-y-2">
+                    <li>Available when rain probability exceeds 50%</li>
+                    <li>Scans 6 locations within 30km of your selected point</li>
+                    <li>Shows locations with lower rain risk (under 40%)</li>
+                  </ol>
+                </div>
+                <p>
+                  Perfect for finding the best nearby location for weddings, festivals, outdoor concerts,
+                  or any weather-dependent event.
+                </p>
+              </div>
+            </Card>
+
             <Card className="p-8 gradient-card border-border/50 shadow-elevated bg-destructive/10">
               <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
@@ -115,7 +145,8 @@ const Docs = () => {
                 <li className="flex items-start gap-2">
                   <span className="text-destructive mt-1">⚠</span>
                   <span>
-                    <strong>Not a forecast:</strong> ClimaTrack shows historical probabilities, not predictions of future weather.
+                    <strong>Forecast range:</strong> Real-time forecasts are only available up to 16 days ahead.
+                    Beyond this range, we use historical climatology patterns.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

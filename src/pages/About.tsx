@@ -11,7 +11,7 @@ const About = () => {
       <div className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="mb-12 text-center">
-            <h1 className="text-5xl font-bold mb-4">About OrbitCode</h1>
+            <h1 className="text-5xl font-bold mb-4">About ClimaTrack</h1>
             <p className="text-xl text-muted-foreground">
               Turning Earth observation archives into clear, actionable planning signals
             </p>
@@ -24,9 +24,7 @@ const About = () => {
                 Our Mission
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                ClimaTrack is built by OrbitCode for the NASA Space Apps Challenge. We believe that decades of
-                Earth observation data should be accessible and actionable for everyone planning outdoor activities,
-                agricultural operations, or any weather-dependent endeavor.
+              ClimaTrack is built for the NASA Space Apps Challenge to help people make informed decisions about outdoor activities using decades of Earth observation data. We believe that historical climate patterns should be accessible and actionable for everyone planning weather-dependent endeavors.
               </p>
             </Card>
 
@@ -68,12 +66,12 @@ const About = () => {
                   <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary to-secondary mx-auto mb-4 flex items-center justify-center">
                     <Users className="h-16 w-16 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-1">OrbitCode Team</h3>
+                  <h3 className="text-xl font-semibold mb-1">ClimaTrack Team</h3>
                   <p className="text-muted-foreground">Full-Stack Developers</p>
                 </div>
                 <p className="text-muted-foreground mt-6 max-w-2xl mx-auto">
                   We're a team of passionate developers and data scientists participating in the NASA Space Apps
-                  Challenge, dedicated to making Earth observation data accessible and useful for everyday planning.
+                  Challenge, dedicated to making Earth observation data accessible and useful for everyday weather planning.
                 </p>
               </div>
             </Card>
@@ -81,8 +79,8 @@ const About = () => {
             <Card className="p-8 gradient-card border-border/50 shadow-glow text-center">
               <h2 className="text-2xl font-bold mb-4">Built for NASA Space Apps Challenge 2025</h2>
               <p className="text-muted-foreground">
-                This project demonstrates the potential of NASA's Earth observation data for practical,
-                everyday applications.
+                ClimaTrack demonstrates the potential of NASA's Earth observation data for practical,
+                everyday weather planning applications.
               </p>
             </Card>
           </div>

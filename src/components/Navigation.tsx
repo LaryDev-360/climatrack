@@ -13,7 +13,7 @@ const Navigation = () => {
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <img
-              src="/logo.jpg"
+              src="/app_logo.jpeg"
               alt="ClimaTrack Logo"
               className="h-10 w-10 rounded-full border border-gray-300 shadow-sm object-cover"
             />
@@ -34,7 +34,7 @@ const Navigation = () => {
               <ThemeToggle />
               <Link to="/app">
                 <Button variant="outline" size="sm">
-                  Open App
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -77,7 +77,7 @@ const Navigation = () => {
               <ThemeToggle />
               <Link to="/app" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="outline" size="sm" className="w-full">
-                  Open App
+                  Get Started
                 </Button>
               </Link>
             </div>

@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import '@fortawesome/fontawesome-svg-core/styles.css';
 
 // Initialize theme on app start
 const initTheme = () => {

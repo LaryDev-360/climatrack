@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-muted-foreground">
-            © {currentYear} OrbitCode — ClimaTrack
+            © {currentYear} ClimaTrack — NASA Space Apps Challenge
           </div>
           <div className="flex items-center space-x-6">
             <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
@@ -18,7 +18,7 @@ const Footer = () => {
               Privacy
             </Link>
             <a
-              href="mailto:hello@orbitcode.dev"
+              href="mailto:laryenockh@gmail.com"
               className="text-sm text-muted-foreground hover:text-foreground transition-smooth"
             >
               Contact

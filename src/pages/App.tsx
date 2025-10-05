@@ -153,7 +153,7 @@ const AppPage = () => {
               </Sheet>
             )}
             <div className="flex items-center gap-2">
-              <img src="/logo.jpg" alt="ClimaTrack" className="h-7 w-7 rounded-full object-cover border border-border/60" />
+              <img src="/app_logo.jpeg" alt="ClimaTrack" className="h-7 w-7 rounded-full object-cover border border-border/60" />
               <span className="font-semibold">ClimaTrack</span>
             </div>
           </div>

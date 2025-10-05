@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExclamationTriangle, faCheckCircle, faThumbsUp, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { Sparkles, Loader2, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Loader2, Sparkles } from "lucide-react";
 
 interface Alternative {
   lat: number;
@@ -114,7 +116,7 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
 
       <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-900 p-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">⚠️</span>
+          <FontAwesomeIcon icon={faExclamationTriangle} className="text-2xl" />
           <div>
             <div className="font-semibold text-orange-900 dark:text-orange-100">
               High Rain Risk ({currentRisk.toFixed(1)}%)
@@ -129,7 +131,7 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
       {selectedLocation && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900 p-3">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">✅</span>
+            <FontAwesomeIcon icon={faCheckCircle} className="text-2xl" />
             <div>
               <div className="font-semibold text-green-900 dark:text-green-100">
                 Location Selected!
@@ -198,7 +200,7 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
                 <>
                   <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900 p-2">
                     <div className="text-sm font-medium text-green-700 dark:text-green-300">
-                      🎉 {alternatives.good_alternatives.length} better location(s) found!
+                       {alternatives.good_alternatives.length} better location(s) found!
                     </div>
                   </div>
 
@@ -232,8 +234,13 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
                           </div>
                         </div>
                         <div className="ml-3 text-2xl">
-                          {alt.probability_percent < 20 ? '✅' :
-                           alt.probability_percent < 30 ? '👍' : '⚠️'}
+                          {alt.probability_percent < 20 ? (
+                            <FontAwesomeIcon icon={faCheckCircle} />
+                          ) : alt.probability_percent < 30 ? (
+                            <FontAwesomeIcon icon={faThumbsUp} />
+                          ) : (
+                            <FontAwesomeIcon icon={faExclamationTriangle} />
+                          )}
                         </div>
                       </div>
                     ))}
@@ -241,7 +248,7 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
 
                   <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-2">
                     <p className="text-xs text-blue-800 dark:text-blue-200">
-                      💡 <strong>{alternatives.good_alternatives[0].name}</strong> seems to be the best option for your {lastSearchedActivity} ({alternatives.good_alternatives[0].distance_km.toFixed(1)}km away).
+                      <FontAwesomeIcon icon={faLightbulb} /> <strong>{alternatives.good_alternatives[0].name}</strong> seems to be the best option for your {lastSearchedActivity} ({alternatives.good_alternatives[0].distance_km.toFixed(1)}km away).
                     </p>
                   </div>
                 </>

@@ -83,7 +83,7 @@ const Landing = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/app">
                 <Button variant="hero" size="lg" className="w-full sm:w-auto">
-                  Open the App
+                  Get Started
                 </Button>
               </Link>
               <Link to="/docs">
@@ -169,7 +169,7 @@ const Landing = () => {
             </h2>
             <Link to="/app">
               <Button variant="hero" size="lg">
-                Open the App
+                Get Started
               </Button>
             </Link>
           </Card>
