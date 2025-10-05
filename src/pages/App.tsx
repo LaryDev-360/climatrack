@@ -12,6 +12,7 @@ import SidebarFilters from "@/components/SidebarFilters";
 import MapPicker, { LatLng } from "@/components/MapPicker";
 import { fetchRisk, RiskResponse } from "@/lib/api";
 import AlternativeSuggestion from "@/components/AlternativeSuggestion";
+import { Link } from "react-router-dom";
 
 const SkyIcon = ({
   name,
@@ -152,10 +153,18 @@ const AppPage = () => {
                 </SheetContent>
               </Sheet>
             )}
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <img src="/app_logo.jpeg" alt="ClimaTrack" className="h-7 w-7 rounded-full object-cover border border-border/60" />
               <span className="font-semibold">ClimaTrack</span>
-            </div>
+            </div> */}
+            <Link to="/" className="flex items-center space-x-2">
+              <img
+                src="/app_logo.jpeg"
+                alt="ClimaTrack Logo"
+                className="h-10 w-10 rounded-full border border-gray-300 shadow-sm object-cover"
+              />
+              <span className="text-xl font-bold">ClimaTrack</span>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:block text-sm text-muted-foreground">Plan with probabilities, not hopes.</div>
