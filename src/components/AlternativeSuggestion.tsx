@@ -81,16 +81,29 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
     setLastSearchedActivity(activityToUse); // Store the activity used for search
 
     try {
-      const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+      const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
+      // Fallback to same logic as main API for consistency
+      if (!baseUrl) {
+        throw new Error("VITE_API_URL environment variable is not set. Please configure your deployment URL.");
+      }
+
+      console.log("API Base URL:", baseUrl);
+      console.log("Full URL:", `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`);
+
       const response = await fetch(
         `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`
       );
 
-      if (!response.ok) throw new Error("Error searching for alternatives");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
       setAlternatives(data);
     } catch (err: any) {
+      console.error("Alternative search error:", err);
       setError(err.message || "Connection error");
     } finally {
       setLoading(false);
