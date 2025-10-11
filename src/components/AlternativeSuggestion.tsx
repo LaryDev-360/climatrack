@@ -19,11 +19,14 @@ interface AlternativeResponse {
   original_location: {
     lat: number;
     lon: number;
-    name: string;
+    name?: string;
     probability_percent: number;
+    distance_km: number;
   };
   good_alternatives: Alternative[];
   has_better_options: boolean;
+  alternatives?: Alternative[];
+  scan_info?: any;
 }
 
 interface Props {
@@ -89,10 +92,10 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
       }
 
       console.log("API Base URL:", baseUrl);
-      console.log("Full URL:", `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`);
+      console.log("Full URL:", `${baseUrl}/risk/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=60&include_geocoding=true`);
 
       const response = await fetch(
-        `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`
+        `${baseUrl}/risk/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=60&include_geocoding=true`
       );
 
       if (!response.ok) {
@@ -101,7 +104,9 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
       }
 
       const data = await response.json();
+      console.log("Scan area response:", data);
       setAlternatives(data);
+      console.log("Alternatives state set:", data);
     } catch (err: any) {
       console.error("Alternative search error:", err);
       setError(err.message || "Connection error");
@@ -209,19 +214,22 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
 
           {alternatives && (
             <div className="space-y-3">
-              {alternatives.has_better_options ? (
+              {/* {console.log("Rendering alternatives:", alternatives)} */}
+              {alternatives && (alternatives.alternatives?.length > 0 || alternatives.good_alternatives?.length > 0) ? (
                 <>
                   <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900 p-2">
                     <div className="text-sm font-medium text-green-700 dark:text-green-300">
-                       {alternatives.good_alternatives.length} better location(s) found!
+                       {alternatives.good_alternatives?.length > 0
+                         ? `${alternatives.good_alternatives.length} better location${alternatives.good_alternatives.length !== 1 ? 's' : ''} found!`
+                         : `${alternatives.alternatives?.length || 0} alternative location${(alternatives.alternatives?.length || 0) !== 1 ? 's' : ''} scanned`}
                     </div>
                   </div>
 
                   <div className="grid gap-2">
-                    {alternatives.good_alternatives.slice(0, 3).map((alt, idx) => (
+                    {(alternatives.good_alternatives?.length > 0 ? alternatives.good_alternatives : alternatives.alternatives)?.slice(0, 3).map((alt, idx) => (
                       <div
                         key={idx}
-                        onClick={() => handleSelectLocation(alt.lat, alt.lon, alt.name)}
+                        onClick={() => handleSelectLocation(alt.lat, alt.lon, alt.name || `Location ${idx + 1}`)}
                         className={`flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer ${
                           selectedLocation?.lat === alt.lat && selectedLocation?.lon === alt.lon
                             ? 'ring-2 ring-primary bg-primary/5'
@@ -261,15 +269,15 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
 
                   <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-2">
                     <p className="text-xs text-blue-800 dark:text-blue-200">
-                      <FontAwesomeIcon icon={faLightbulb} /> <strong>{alternatives.good_alternatives[0].name}</strong> seems to be the best option for your {lastSearchedActivity} ({alternatives.good_alternatives[0].distance_km.toFixed(1)}km away).
+                      <FontAwesomeIcon icon={faLightbulb} /> <strong>{(alternatives.good_alternatives?.length > 0 ? alternatives.good_alternatives[0]?.name : alternatives.alternatives?.[0]?.name) || `Location 1`}</strong> seems to be the best option for your {lastSearchedActivity} ({(alternatives.good_alternatives?.length > 0 ? alternatives.good_alternatives[0]?.distance_km : alternatives.alternatives?.[0]?.distance_km)?.toFixed(1)}km away).
                     </p>
                   </div>
                 </>
-              ) : (
+              ) : alternatives.alternatives?.length === 0 && alternatives.good_alternatives?.length === 0 ? (
                 <div className="rounded-lg border border-border/50 bg-muted/20 p-3 text-sm text-muted-foreground">
-                  No significantly better alternatives found within 30km radius. Weather conditions are similar across the region.
+                  No alternative locations found within 30km radius.
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
