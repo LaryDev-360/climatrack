@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
@@ -8,7 +9,7 @@ const initTheme = () => {
   const theme = localStorage.getItem("theme") || "system";
   const root = document.documentElement;
   root.classList.remove("light", "dark");
-  
+
   if (theme === "system") {
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     root.classList.add(systemTheme);
@@ -19,4 +20,8 @@ const initTheme = () => {
 
 initTheme();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);

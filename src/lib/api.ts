@@ -42,6 +42,7 @@ export async function fetchRisk(params: {
   const prefix = base ? base : "";
 
   const url = `${prefix}/risk?lat=${params.lat}&lon=${params.lon}&date=${params.dateISO}&h1=${params.h1}&h2=${params.h2}&mm=${params.mm}`;
+  // const url = `${prefix}/risk?lat=${params.lat}&lon=${params.lon}&date=${params.dateISO}&h1=${params.h1}&h2=${params.h2}&mm=${params.mm}`;
 
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   const ct = res.headers.get("content-type") || "";

@@ -88,12 +88,12 @@ export default function AlternativeSuggestion({ lat, lon, date, h1, h2, currentR
         throw new Error("VITE_API_URL environment variable is not set. Please configure your deployment URL.");
       }
 
-      console.log("API Base URL:", baseUrl);
-      console.log("Full URL:", `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`);
+      // console.log("API Base URL:", baseUrl);
+      // console.log("Full URL:", `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`);
 
       const response = await fetch(
-        // `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`
-        `${baseUrl}/risk/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true`
+        // `${baseUrl}/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true` // Old endpoint
+        `${baseUrl}/risk/scan-area?lat=${lat}&lon=${lon}&date=${date}&h1=${h1}&h2=${h2}&radius_km=30&num_points=6&max_risk=40&include_geocoding=true` // New endpoint
       );
 
       if (!response.ok) {

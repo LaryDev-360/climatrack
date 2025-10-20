@@ -52,7 +52,7 @@ const AppPage = () => {
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to results when computation completes
+  // Layout stabilization for mobile
   useEffect(() => {
     if (result && resultsRef.current) {
       resultsRef.current.scrollIntoView({
@@ -60,7 +60,14 @@ const AppPage = () => {
         block: 'start'
       });
     }
-  }, [result]);
+    if (isMobile) {
+      // Force layout recalculation after mount
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [result, isMobile]);
 
   const latlonLabel = picked ? `${picked.lat.toFixed(4)}°, ${picked.lon.toFixed(4)}°` : "No point selected";
   const canCompute = useMemo(
@@ -76,6 +83,10 @@ const AppPage = () => {
 
     setErrorMsg("");
     setComputing(true);
+
+    // Add a small delay to ensure DOM is stable before making the request
+    await new Promise(resolve => setTimeout(resolve, 10));
+
     try {
       const data = await fetchRisk({
         lat: picked.lat,
@@ -87,6 +98,7 @@ const AppPage = () => {
       });
       setResult(data);
     } catch (e: any) {
+      console.error('Compute error:', e);
       setResult(null);
       setErrorMsg(e?.message || "Request failed.");
     } finally {
@@ -122,36 +134,38 @@ const AppPage = () => {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
             {isMobile && (
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9"><Menu className="h-5 w-5" /></Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 overflow-y-auto z-[1000]">
-                  <SidebarFilters
-                    locationText={locationText}
-                    dateISO={dateISO}
-                    startHour={startHour}
-                    endHour={endHour}
-                    mm={mm}
-                    computing={computing}
-                    onLocationPick={(name) => setLocationText(name)}
-                    onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
-                    onChange={(p) => {
-                      if (p.locationText !== undefined) setLocationText(p.locationText);
-                      if (p.dateISO !== undefined) setDateISO(p.dateISO);
-                      if (p.startHour !== undefined) setStartHour(p.startHour);
-                      if (p.endHour !== undefined) setEndHour(p.endHour);
-                      if (p.mm !== undefined) setMm(p.mm);
-                    }}
-                    onCompute={async (p) => {
-                      // onCompute reflète déjà le state parent puisqu'il est contrôlé
-                      if (!picked) return;
-                      await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
-                      setMobileOpen(false);
-                    }}
-                  />
-                </SheetContent>
-              </Sheet>
+              <div className="flex-shrink-0">
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9"><Menu className="h-5 w-5" /></Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-80 overflow-y-auto z-[1000]">
+                    <SidebarFilters
+                      locationText={locationText}
+                      dateISO={dateISO}
+                      startHour={startHour}
+                      endHour={endHour}
+                      mm={mm}
+                      computing={computing}
+                      onLocationPick={(name) => setLocationText(name)}
+                      onSelectLatLon={(lat, lon) => setPicked({ lat, lon })}
+                      onChange={(p) => {
+                        if (p.locationText !== undefined) setLocationText(p.locationText);
+                        if (p.dateISO !== undefined) setDateISO(p.dateISO);
+                        if (p.startHour !== undefined) setStartHour(p.startHour);
+                        if (p.endHour !== undefined) setEndHour(p.endHour);
+                        if (p.mm !== undefined) setMm(p.mm);
+                      }}
+                      onCompute={async (p) => {
+                        // onCompute reflète déjà le state parent puisqu'il est contrôlé
+                        if (!picked) return;
+                        await runCompute(p.dateISO, p.startHour, p.endHour, p.mm);
+                        setMobileOpen(false);
+                      }}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </div>
             )}
             {/* <div className="flex items-center gap-2">
               <img src="/app_logo.jpeg" alt="ClimaTrack" className="h-7 w-7 rounded-full object-cover border border-border/60" />
@@ -173,7 +187,12 @@ const AppPage = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-3.5rem)] relative">
+        {/* Mobile Sidebar Background - prevents layout shifts */}
+        {isMobile && (
+          <div className="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-200 z-30 data-[open=true]:opacity-100" data-open={mobileOpen} />
+        )}
+
         {/* Sidebar desktop */}
         {!isMobile && (
           <aside className="w-80 border-r border-border/50 bg-card/30 backdrop-blur-sm p-6 overflow-y-auto">
@@ -202,7 +221,7 @@ const AppPage = () => {
         )}
 
         {/* Main */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 min-w-0">
           <div className="mx-auto max-w-6xl space-y-6">
             {/* Map Section - Enhanced */}
             <div className="space-y-4">
@@ -239,25 +258,33 @@ const AppPage = () => {
                 </div>
 
                 <div className="p-6 border-t border-border/50">
+                  {errorMsg && (
+                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-4">
+                      <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium">Error:</span>
+                        {errorMsg}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex flex-wrap gap-2">
                       <Button
+                        key={computing ? 'computing' : 'ready'}
                         onClick={() => runCompute(dateISO, startHour, endHour, mm)}
                         disabled={!canCompute || computing}
                         size="lg"
                         className="font-medium"
                       >
-                        {computing ? (
-                          <>
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                            Computing Risk...
-                          </>
-                        ) : (
-                          <>
-                            <Gauge className="mr-2 h-4 w-4" />
-                            Analyze Risk for This Location
-                          </>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {computing ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <Gauge className="h-4 w-4" />
+                          )}
+                          <span>{computing ? 'Computing Risk...' : 'Analyze Risk for This Location'}</span>
+                        </div>
                       </Button>
                     </div>
 
@@ -290,15 +317,6 @@ const AppPage = () => {
                       </div>
                     )}
                   </div>
-
-                  {errorMsg && (
-                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
-                        <AlertTriangle className="h-4 w-4" />
-                        {errorMsg}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </Card>
             </div>

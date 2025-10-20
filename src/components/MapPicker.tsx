@@ -100,6 +100,7 @@ export default function MapPicker({
   zoom = 7,
 }: MapPickerProps) {
   const [point, setPoint] = useState<LatLng | undefined>(value);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Scroll to results when a point is selected
@@ -154,6 +155,7 @@ export default function MapPicker({
           className="bg-muted/20 rounded-lg"
           zoomControl={false}
           attributionControl={false}
+          whenReady={() => setMapLoaded(true)}
         >
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
@@ -163,6 +165,11 @@ export default function MapPicker({
           <RecenterOnPoint point={point} zoom={zoom} />
           {point && <Marker position={[point.lat, point.lon]} icon={icon} />}
         </MapContainer>
+        {!mapLoaded && (
+          <div className="absolute inset-0 bg-muted/50 flex items-center justify-center rounded-lg">
+            <div className="text-sm text-muted-foreground">Loading map...</div>
+          </div>
+        )}
       </div>
 
       <div ref={resultsRef} className="absolute bottom-2 left-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border/50">
